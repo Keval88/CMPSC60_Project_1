@@ -1,17 +1,14 @@
-"""
-data_loading.py
-Load the water pump dataset, take first 10,000 rows,
-and convert RUL into 4 categories using quantiles.
-"""
+# data_loading.py
+# loads the dataset and converts RUL into 4 categories
 
 import pandas as pd
 import numpy as np
 
 
 def load_data(filepath, nrows=10000):
-    """Load CSV and return first nrows rows."""
+    # read only first 10000 rows
     df = pd.read_csv(filepath, nrows=nrows)
-    # drop the unnamed index column if present
+    # the csv has an unnamed index column, drop it
     if 'Unnamed: 0' in df.columns:
         df = df.drop(columns=['Unnamed: 0'])
     df = df.reset_index(drop=True)
@@ -19,21 +16,13 @@ def load_data(filepath, nrows=10000):
 
 
 def get_sensor_columns(df):
-    """Return list of sensor column names (everything except timestamp, rul, and derived columns)."""
-    exclude = {'timestamp', 'rul', 'rul_category', 'rul_category_name'}
-    return [c for c in df.columns if c not in exclude]
+    # return all columns that are sensor readings (not timestamp, rul, or the category columns we add)
+    skip = {'timestamp', 'rul', 'rul_category', 'rul_category_name'}
+    return [c for c in df.columns if c not in skip]
 
 
 def add_rul_category(df):
-    """
-    Add a 'rul_category' column based on Q10, Q50, Q90 quantiles of the rul column.
-
-    Categories:
-        0 - Extremely Low RUL  : rul < Q10
-        1 - Moderately Low RUL : Q10 <= rul < Q50
-        2 - Moderately High RUL: Q50 <= rul < Q90
-        3 - Extremely High RUL : rul >= Q90
-    """
+    # compute the three quantile cutoffs
     rul = df['rul'].values
     q10 = np.percentile(rul, 10)
     q50 = np.percentile(rul, 50)
@@ -41,6 +30,7 @@ def add_rul_category(df):
 
     print(f"RUL quantiles -> Q10: {q10:.2f}, Q50: {q50:.2f}, Q90: {q90:.2f}")
 
+    # assign category 0-3 based on where the rul value falls
     categories = []
     for v in rul:
         if v < q10:
@@ -64,7 +54,6 @@ def add_rul_category(df):
 
 
 def summarize_categories(df):
-    """Print count and percentage of each RUL category."""
     print("\nRUL Category Distribution:")
     counts = df['rul_category_name'].value_counts()
     total = len(df)
@@ -78,4 +67,4 @@ if __name__ == '__main__':
     df, quantiles = add_rul_category(df)
     summarize_categories(df)
     sensors = get_sensor_columns(df)
-    print(f"\nSensor columns ({len(sensors)}): {sensors[:5]} ...")
+    print(f"Sensor columns ({len(sensors)}): {sensors[:5]} ...")

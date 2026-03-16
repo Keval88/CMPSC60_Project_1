@@ -1,140 +1,75 @@
-"""
-task2_clustering.py
-Divide-and-Conquer Clustering into exactly 4 clusters.
-
-Algorithm idea (recursive bisection / divisive clustering):
-  - Start with all N points in one cluster.
-  - Recursively split the cluster with the largest spread (max range across
-    any feature dimension) by finding the best single-feature median split.
-  - Stop when we have exactly k=4 clusters.
-  - This is a top-down / divisive approach — classic divide-and-conquer.
-
-No sklearn or ML libraries used.
-"""
+# task2_clustering.py
+# Divide and conquer clustering (divisive / top-down approach)
+# No sklearn or any ML library used - built from scratch
+#
+# How it works:
+#   Start with all points in one cluster.
+#   Find the cluster with the most spread (highest total variance).
+#   Split it by finding the feature with the highest variance, then split at the median.
+#   Repeat until we have k=4 clusters.
 
 import numpy as np
 
 
-# ─────────────────────────────────────────────
-#  Distance and centroid helpers
-# ─────────────────────────────────────────────
-
-def centroid(X):
-    """Mean vector of a set of points."""
-    return np.mean(X, axis=0)
-
-
-def spread(X):
-    """
-    Measure of cluster spread: sum of variances across all dimensions.
-    Used to decide which cluster to split next.
-    """
+def get_spread(X):
+    # measure how spread out a cluster is - just sum of variances across all features
     if len(X) <= 1:
         return 0.0
     return float(np.sum(np.var(X, axis=0)))
 
 
-# ─────────────────────────────────────────────
-#  Single-cluster bisection
-# ─────────────────────────────────────────────
-
 def bisect_cluster(X, indices):
-    """
-    Split a cluster into two by finding the feature with the highest variance
-    and splitting at the median of that feature.
+    # split this cluster into two groups
+    chunk = X[indices]
 
-    Parameters
-    ----------
-    X       : full data matrix (N, D)
-    indices : 1-D array of row indices belonging to this cluster
-
-    Returns
-    -------
-    left_idx, right_idx : two arrays of row indices
-    """
-    chunk = X[indices]          # (m, D)
+    # find the feature with the most variance to split on
     variances = np.var(chunk, axis=0)
-    best_feat = int(np.argmax(variances))   # feature with highest variance
+    split_feature = int(np.argmax(variances))
 
-    median_val = np.median(chunk[:, best_feat])
+    median_val = np.median(chunk[:, split_feature])
 
-    mask_left = chunk[:, best_feat] <= median_val
-    # if split produces an empty side (all values equal), fall back to half-split
-    if mask_left.all() or (~mask_left).all():
+    left_mask = chunk[:, split_feature] <= median_val
+
+    # edge case: if all values are the same, just split in half
+    if left_mask.all() or (~left_mask).all():
         mid = len(indices) // 2
         return indices[:mid], indices[mid:]
 
-    left_idx = indices[mask_left]
-    right_idx = indices[~mask_left]
-    return left_idx, right_idx
+    return indices[left_mask], indices[~left_mask]
 
-
-# ─────────────────────────────────────────────
-#  Divisive clustering (divide-and-conquer)
-# ─────────────────────────────────────────────
 
 def divisive_cluster(X, k=4):
-    """
-    Top-down divisive clustering into exactly k clusters.
-
-    Strategy:
-      - Maintain a list of current clusters (each is an index array).
-      - At each step, pick the cluster with the largest spread and bisect it.
-      - Repeat until we have k clusters.
-
-    Parameters
-    ----------
-    X : numpy array of shape (N, D)
-    k : target number of clusters (default 4)
-
-    Returns
-    -------
-    labels : 1-D array of shape (N,) with cluster assignments 0..k-1
-    """
-    N = len(X)
-    # start: one cluster containing everything
-    clusters = [np.arange(N)]
+    # start with everything in one cluster
+    clusters = [np.arange(len(X))]
 
     while len(clusters) < k:
-        # pick cluster with largest spread to split next
-        spreads = [spread(X[c]) for c in clusters]
-        worst = int(np.argmax(spreads))
+        # pick the most spread out cluster to split next
+        spreads = [get_spread(X[c]) for c in clusters]
+        worst_idx = int(np.argmax(spreads))
 
-        if spreads[worst] == 0.0:
-            # all remaining clusters are singletons or uniform — stop early
+        if spreads[worst_idx] == 0.0:
+            # nothing left to split
             break
 
-        left, right = bisect_cluster(X, clusters[worst])
-        clusters.pop(worst)
+        left, right = bisect_cluster(X, clusters[worst_idx])
+        clusters.pop(worst_idx)
         clusters.append(left)
         clusters.append(right)
 
-    # assign integer labels
-    labels = np.empty(N, dtype=int)
+    # assign integer labels 0, 1, 2, 3
+    labels = np.empty(len(X), dtype=int)
     for label, idx_arr in enumerate(clusters):
         labels[idx_arr] = label
 
     return labels
 
 
-# ─────────────────────────────────────────────
-#  Run Task 2
-# ─────────────────────────────────────────────
-
 def run_task2(df, sensor_columns):
-    """
-    Cluster all 10,000 rows using divisive clustering, then report
-    the majority RUL category and count for each cluster.
-
-    Returns
-    -------
-    labels : numpy array of cluster assignments
-    """
     print("\n=== TASK 2: Divide-and-Conquer Clustering ===")
 
     X = df[sensor_columns].values.astype(float)
 
-    # simple NaN fill: replace with column mean
+    # replace NaN with the column mean
     col_means = np.nanmean(X, axis=0)
     for j in range(X.shape[1]):
         nan_mask = np.isnan(X[:, j])
@@ -181,14 +116,8 @@ def run_task2(df, sensor_columns):
     return labels
 
 
-# ─────────────────────────────────────────────
-#  Toy example (for report / demo)
-# ─────────────────────────────────────────────
-
 def toy_example():
-    """Demonstrate divisive clustering on a small 2-D dataset."""
     print("\n--- Toy Example (divisive clustering) ---")
-    # 8 points in two obvious groups
     X = np.array([
         [1.0, 2.0],
         [1.5, 1.8],
