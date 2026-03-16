@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+plots/
+rul_hrs.csv
+rul_hrs.csv:Zone.Identifier
+report.tex
+generate_report.py
