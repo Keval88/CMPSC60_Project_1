@@ -1,4 +1,4 @@
-# CMPSC60 Project 1 — Water Pump Sensor Time-Series Analysis
+# CMPSC463 Project 1 — Water Pump Sensor Time-Series Analysis
 
 Algorithms course project implementing divide-and-conquer segmentation, divisive clustering,
 and Kadane's maximum-subarray algorithm on water pump sensor data.
@@ -28,7 +28,7 @@ pip install pandas numpy matplotlib
 ## Project Structure
 
 ```
-CMPSC60_Project_1/
+CMPSC463_Project_1/
 ├── rul_hrs.csv           # dataset (download separately)
 ├── data_loading.py       # load CSV, add RUL category column
 ├── task1_segmentation.py # Task 1: divide-and-conquer variance segmentation

@@ -1,5 +1,5 @@
 # main.py
-# runs all three tasks for CMPSC60 Project 1
+# runs all three tasks for CMPSC463 Project 1
 # Usage: python main.py
 
 import os
@@ -21,7 +21,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 def main():
     print("=" * 60)
-    print("  CMPSC60 Project 1: Water Pump Sensor Analysis")
+    print("  CMPSC463 Project 1: Water Pump Sensor Analysis")
     print("=" * 60)
 
     # load data
